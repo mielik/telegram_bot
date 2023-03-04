@@ -62,10 +62,8 @@ def check_tokens():
 
 
 def get_api_answer(timestamp):
-    """
-    Make a request to the only endpoint of the API service, should return,
-    an API response, by converting it from JSON format to Python data types.
-    """
+    """Make a request to endpoint of the API service."""
+    # Сonverting API response from JSON format to Python data types.
     try:
         response = requests.get(
             ENDPOINT, headers=HEADERS, params={"from_date": timestamp}
@@ -118,10 +116,7 @@ def parse_status(homework):
 
 
 def send_message(bot, message):
-    """
-    Send a message to Telegram chat, defined by the TELEGRAM_CHAT_ID,
-    environment variable.
-    """
+    """Send a message to Telegram chat, defined by the TELEGRAM_CHAT_ID."""
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         logging.debug("Сообщение отправлено: {message}")
