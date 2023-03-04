@@ -38,7 +38,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("CHAT_ID")
 
 RETRY_PERIOD = 600
-CURRENT_DATE = time.time()
+
 ENDPOINT = "https://practicum.yandex.ru/api/user_api/homework_statuses/"
 HEADERS = {"Authorization": f"OAuth {PRACTICUM_TOKEN}"}
 PAYLOAD = {"from_date": 0}
@@ -62,8 +62,10 @@ def check_tokens():
 
 
 def get_api_answer(timestamp):
-    """Make a request to the only endpoint of the API service, should return
-    an API response, by converting it from JSON format to Python data types"""
+    """
+    Make a request to the only endpoint of the API service, should return
+    an API response, by converting it from JSON format to Python data types
+    """
     try:
         response = requests.get(
             ENDPOINT, headers=HEADERS, params={"from_date": timestamp}
@@ -97,9 +99,11 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Extract the status from the information about a particular homework.
+    """
+    Extract the status from the information about a particular homework.
     The function returns the line prepared for sending to Telegram,
-    containing one of the verdicts of the HOMEWORK_VERDICTS dictionary.."""
+    containing one of the verdicts of the HOMEWORK_VERDICTS dictionary.
+    """
     # Сheck that there is `homework_name` key in the homework API response
     if "homework_name" not in homework:
         logging.error("Key 'homework name' is not found")
@@ -114,8 +118,10 @@ def parse_status(homework):
 
 
 def send_message(bot, message):
-    """Send a message to Telegram chat, defined by the TELEGRAM_CHAT_ID
-    environment variable."""
+    """
+    Send a message to Telegram chat, defined by the TELEGRAM_CHAT_ID
+    environment variable.
+    """
     try:
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         logging.debug("Сообщение отправлено: {message}")
