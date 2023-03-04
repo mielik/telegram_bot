@@ -52,7 +52,7 @@ HOMEWORK_VERDICTS = {
 
 
 def check_tokens():
-    """Check the availability of environment variables"""
+    """Check the availability of environment variables."""
     required_env_vars = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
     for env_var in required_env_vars:
         if env_var is None:
@@ -64,7 +64,7 @@ def check_tokens():
 def get_api_answer(timestamp):
     """
     Make a request to the only endpoint of the API service, should return
-    an API response, by converting it from JSON format to Python data types
+    an API response, by converting it from JSON format to Python data types.
     """
     try:
         response = requests.get(
