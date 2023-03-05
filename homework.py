@@ -1,11 +1,15 @@
 import logging
 import os
 import time
+from http import HTTPStatus
 from logging.handlers import RotatingFileHandler
 
 import requests
 import telegram
 from dotenv import load_dotenv
+from exceptions import (APICallFail, NoResponseException,
+                        ParseStatusError, TelegramException
+                        )
 
 load_dotenv()
 # Задана глобальная конфигурация для всех логгеров
@@ -57,8 +61,8 @@ def check_tokens():
     for env_var in required_env_vars:
         if env_var is None:
             logging.critical((f"Enter a variable {env_var}"))
-            exit("Error variable")
-    return "OK"
+            exit()
+    return True
 
 
 def get_api_answer(timestamp):
@@ -68,16 +72,16 @@ def get_api_answer(timestamp):
         response = requests.get(
             ENDPOINT, headers=HEADERS, params={"from_date": timestamp}
         )
-        if response.status_code != 200:
-            logging.error(
+        if response.status_code != HTTPStatus.OK:
+            raise APICallFail(
                 f"Error {response.status_code}: {response.content}",
-                exc_info=True
             )
-            return None
         else:
             return response.json()
     except requests.RequestException as error:
-        logging.error(f"Error while sending request to Telegram API: {error}")
+        raise APICallFail(
+            f"Error while sending request to Telegram API: {error}"
+        )
 
 
 def check_response(response):
@@ -85,14 +89,11 @@ def check_response(response):
     if not isinstance(response, dict):
         raise TypeError("Response is not a dictionary")
     if not response.get("homeworks"):
-        raise Exception("No response")
+        raise NoResponseException("No response")
     if not isinstance(response.get("homeworks"), list):
         raise TypeError("Not list")
-    for homework in response["homeworks"]:
-        if "homework_name" not in homework or "status" not in homework:
-            raise KeyError("Not valid homework name or status")
     if "current_date" not in response:
-        raise Exception("No current date in response")
+        raise KeyError("No current date in response")
     return response["homeworks"]
 
 
@@ -104,13 +105,11 @@ def parse_status(homework):
     """
     # Сheck that there is `homework_name` key in the homework API response
     if "homework_name" not in homework:
-        logging.error("Key 'homework name' is not found")
         raise KeyError("Homework name is not found")
     homework_name = homework.get("homework_name")
     status = homework["status"]
     if status not in HOMEWORK_VERDICTS:
-        logging.error("Homework status is not found")
-        raise Exception("Homework status is not found")
+        raise ParseStatusError("Homework status is not found")
     verdict = HOMEWORK_VERDICTS[homework.get("status")]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
@@ -118,6 +117,7 @@ def parse_status(homework):
 def send_message(bot, message):
     """Send a message to Telegram chat, defined by the TELEGRAM_CHAT_ID."""
     try:
+        logging.info("Sending message to Telegram")
         bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
         logging.debug("Сообщение отправлено: {message}")
     except Exception:
@@ -126,7 +126,7 @@ def send_message(bot, message):
 
 def main():
     """Основная логика работы бота."""
-    if check_tokens() != "OK":
+    if not check_tokens():
         logging.info("No tokens")
         exit()
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
@@ -138,14 +138,14 @@ def main():
             response = get_api_answer(timestamp)
             homework = check_response(response)
             timestamp = response.get("current_date", timestamp)
-            new_status = parse_status(homework[0])
             if not homework:
                 logging.info("Error")
             else:
+                new_status = parse_status(homework[0])
                 if status != new_status:
                     status = new_status
                     send_message(bot, status)
-        except Exception as error:
+        except TelegramException as error:
             message = f"Сбой в работе программы: {error}"
             if message not in LIST_ERRORS:
                 message = send_message(bot, message)
