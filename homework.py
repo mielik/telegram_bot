@@ -60,8 +60,7 @@ def get_api_answer(timestamp):
             raise APICallError(
                 f"Error {response.status_code}: {response.content}",
             )
-        else:
-            return response.json()
+        return response.json()
     except requests.RequestException as error:
         raise APICallError(
             f"Error while sending request to Telegram API: {error}"
@@ -120,7 +119,8 @@ def main():
             response = get_api_answer(timestamp)
             homework = check_response(response)
             timestamp = response.get("current_date", timestamp)
-            new_status = parse_status(homework[0])
+            if homework:
+                new_status = parse_status(homework[0])
             if status != new_status:
                 status = new_status
                 send_message(bot, status)
