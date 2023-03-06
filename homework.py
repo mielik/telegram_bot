@@ -121,9 +121,9 @@ def main():
             timestamp = response.get("current_date", timestamp)
             if homework:
                 new_status = parse_status(homework[0])
-            if status != new_status:
-                status = new_status
-                send_message(bot, status)
+                if status != new_status:
+                    status = new_status
+                    send_message(bot, status)
         except MissingDataInResponse as info:
             logger.info(info)
         except (TelegramBotError, KeyError, TypeError) as error:
